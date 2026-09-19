@@ -105,7 +105,7 @@ export default function VolunteerHub() {
                   localStorage.setItem(`msg-${cleanKey}`, finalMsg);
                 } else {
                   const finalMsg =
-                    "⭐ That's a wrap! You're completely finished.";
+                    "⭐ That's a wrap! You're completely finished here.";
                   setSuccessMessage((prev) => ({
                     ...prev,
                     [cleanKey]: finalMsg,
@@ -235,12 +235,12 @@ export default function VolunteerHub() {
           setCheckedOutSlots((prev) => ({ ...prev, [uniqueKey]: true }));
           setSuccessMessage((prev) => ({
             ...prev,
-            [uniqueKey]: "⭐ That's a wrap! You're completely finished.",
+            [uniqueKey]: "⭐ That's a wrap! You're completely finished here.",
           }));
           localStorage.setItem(`out-${uniqueKey}`, "true");
           localStorage.setItem(
             `msg-${uniqueKey}`,
-            "⭐ That's a wrap! You're completely finished.",
+            "⭐ That's a wrap! You're completely finished here.",
           );
         }
       } catch (error) {
@@ -351,14 +351,14 @@ export default function VolunteerHub() {
         </p>
       </div>
 
-      <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded mb-6">
+      <div className="bg-red-50 border border-slate-800/80 p-3 rounded mb-6">
         <div className="flex gap-2">
-          <span className="text-blue-600 font-bold">📍</span>
+          <span className="font-bold">📍</span>
           <div>
-            <h4 className="text-md font-bold text-blue-800 uppercase tracking-wider">
+            <h4 className="text-md font-bold uppercase tracking-wider">
               Device Location Required
             </h4>
-            <p className="text-sm text-blue-700 mt-0.5">
+            <p className="text-sm mt-0.5">
               Please ensure you select <strong>"Allow Location"</strong>
               <br /> when prompted to check-in when
               <br className="sm:hidden" />{" "}
@@ -367,6 +367,55 @@ export default function VolunteerHub() {
           </div>
         </div>
       </div>
+
+      <button
+        onClick={() => {
+          if (navigator.share) {
+            navigator
+              .share({
+                title: "OLM Volunteer Hub",
+                text: `👋 Hey! Here is the link to check into your OLM Movie Night volunteer shifts. Make sure you are standing on school grounds when you click it!`,
+                url: window.location.origin, // Dynamically grabs your live vercel URL!
+              })
+              .then(() => console.log("Successful share"))
+              .catch((error) => console.log("Error sharing", error));
+          } else {
+            // Fallback for older desktop browsers: Copy URL directly to clipboard
+            navigator.clipboard.writeText(window.location.origin);
+            triggerModal(
+              "📋 Link Copied!",
+              "The app web link has been copied to your phone clipboard. Paste it directly into a text to share with fellow parents!",
+            );
+          }
+        }}
+        className="w-full bg-green-500 border border-slate-800/80 active:scale-[0.99] transition duration-150 p-3 rounded-xl text-left text-md font-semibold flex items-center justify-between group my-5"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-md p-3">
+            <svg
+              xmlns="http://w3.org"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5"
+            >
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </span>
+          <div>
+            <p className="font-bold">
+              Share Check-In App
+              <br className="sm:hidden" /> with other Parents
+            </p>
+            <p className="font-normal">Text or AirDrop this check-in page</p>
+          </div>
+        </div>
+        <span className="text-md font-bold">➔</span>
+      </button>
 
       {errorNotice && (
         <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-4 border border-red-100">
@@ -407,6 +456,10 @@ export default function VolunteerHub() {
               Logged in as: {volunteer.email}
             </p>
           </div>
+
+          <p className="text-lg my-5 bg-yellow-50 border border-slate-800/80 p-3 rounded">
+            ℹ️ This tracks real-time data for your exact <strong>Check-In</strong> and <strong>Check-Out</strong> timestamps. Please click <strong>Check In</strong> when you report to your post, and click <strong>Check Out</strong> when your assignment wraps up!
+          </p>
 
           <div className="space-y-3">
             {volunteer.slots.map((slot, index) => {
@@ -470,7 +523,7 @@ export default function VolunteerHub() {
                           )
                         }
                         disabled={hasCheckedIn}
-                        className={`font-medium py-2 px-3 rounded-lg text-sm transition flex items-center justify-center gap-1 ${hasCheckedIn ? "bg-green-100 text-green-700 border border-green-200 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"}`}
+                        className={`font-medium py-2 px-3 rounded-lg text-sm transition flex items-center justify-center gap-1 ${hasCheckedIn ? "bg-green-100 text-green-700 border border-slate-800/80 cursor-not-allowed font-bold" : "bg-green-600 hover:bg-green-700 text-white font-bold border border-slate-800/80"}`}
                       >
                         {hasCheckedIn ? "✓ Checked In" : "Check In"}
                       </button>
