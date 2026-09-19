@@ -555,7 +555,7 @@ export default function VolunteerHub() {
             }}
             className="w-full text-center text-lg text-gray-500 hover:text-gray-700 underline mt-4 block"
           >
-            ← Clear and search different<br className="sm:hidden" /> email
+            ← Clear and search different email
           </button>
         </div>
       )}
