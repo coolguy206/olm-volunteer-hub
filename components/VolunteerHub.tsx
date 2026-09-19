@@ -20,7 +20,7 @@ interface VolunteerRecord {
 const OLM_LAT = 37.6985;
 const OLM_LON = -122.4678;
 const ALLOWED_RADIUS_METERS = 150;
-const IS_TESTING_MODE = true; // 🚀 Set to false before deploying live to the school campus!
+const IS_TESTING_MODE = false; // 🚀 Set to false before deploying live to the school campus!
 
 export default function VolunteerHub() {
   const [email, setEmail] = useState("");
