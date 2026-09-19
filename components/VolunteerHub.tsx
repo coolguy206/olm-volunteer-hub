@@ -351,7 +351,7 @@ export default function VolunteerHub() {
         </p>
       </div>
 
-      <div className="bg-red-50 border border-slate-800/80 p-3 rounded mb-6">
+      <div className="bg-red-50 border border-slate-800/80 p-3 rounded mb-6 text-black">
         <div className="flex gap-2">
           <span className="font-bold">📍</span>
           <div>
@@ -388,7 +388,7 @@ export default function VolunteerHub() {
             );
           }
         }}
-        className="w-full bg-green-500 border border-slate-800/80 active:scale-[0.99] transition duration-150 p-3 rounded-xl text-left text-md font-semibold flex items-center justify-between group my-5"
+        className="w-full bg-green-500 border border-slate-800/80 active:scale-[0.99] transition duration-150 p-3 rounded-xl text-left text-md font-semibold flex items-center justify-between group my-5 text-black"
       >
         <div className="flex items-center gap-2">
           <span className="text-md p-3">
@@ -457,7 +457,7 @@ export default function VolunteerHub() {
             </p>
           </div>
 
-          <p className="text-lg my-5 bg-yellow-50 border border-slate-800/80 p-3 rounded">
+          <p className="text-lg my-5 bg-yellow-50 border border-slate-800/80 p-3 rounded text-black">
             ℹ️ This tracks real-time data for your exact <strong>Check-In</strong> and <strong>Check-Out</strong> timestamps. Please click <strong>Check In</strong> when you report to your post, and click <strong>Check Out</strong> when your assignment wraps up!
           </p>
 
@@ -555,7 +555,7 @@ export default function VolunteerHub() {
             }}
             className="w-full text-center text-lg text-gray-500 hover:text-gray-700 underline mt-4 block"
           >
-            ← Clear and search different email
+            ← Clear and search different<br className="sm:hidden" /> email
           </button>
         </div>
       )}
