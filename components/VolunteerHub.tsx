@@ -40,6 +40,28 @@ export default function VolunteerHub() {
     Record<string, string | null>
   >({});
 
+  // Add this state right below your other useState properties inside VolunteerHub
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    isError: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    isError: false,
+  });
+
+  // A helper function to easily trigger your custom modal from anywhere
+  const triggerModal = (
+    title: string,
+    message: string,
+    isError: boolean = false,
+  ) => {
+    setModalConfig({ isOpen: true, title, message, isError });
+  };
+
   // components/VolunteerHub.tsx - Chunk 2
   // Synchronizes and forces memory validation lookups
   useEffect(() => {
@@ -54,9 +76,9 @@ export default function VolunteerHub() {
 
         // Process each queued check-in sequentially
         for (const item of queuedItems) {
-          const res = await fetch('/api/checkin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const res = await fetch("/api/checkin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(item),
           });
 
@@ -65,19 +87,29 @@ export default function VolunteerHub() {
             // Since we know the email, slotId, and index inside the item payload:
             // Note: If you didn't pass the layout 'index' in the offline payload, we can infer it
             // By finding matching slots on screen. For safety, we can scan our active keys.
-            
+
             // Let's find any keys matching this email and slotId to flip their banners live!
             Object.keys(localStorage).forEach((key) => {
               if (key.includes(`${item.email}-${item.slotId}`)) {
-                const cleanKey = key.replace('in-', '').replace('out-', '').replace('msg-', '');
-                
-                if (item.type === 'IN') {
+                const cleanKey = key
+                  .replace("in-", "")
+                  .replace("out-", "")
+                  .replace("msg-", "");
+
+                if (item.type === "IN") {
                   const finalMsg = "✓ Success, you're checked in!";
-                  setSuccessMessage(prev => ({ ...prev, [cleanKey]: finalMsg }));
+                  setSuccessMessage((prev) => ({
+                    ...prev,
+                    [cleanKey]: finalMsg,
+                  }));
                   localStorage.setItem(`msg-${cleanKey}`, finalMsg);
                 } else {
-                  const finalMsg = "⭐ That's a wrap! You're completely finished.";
-                  setSuccessMessage(prev => ({ ...prev, [cleanKey]: finalMsg }));
+                  const finalMsg =
+                    "⭐ That's a wrap! You're completely finished.";
+                  setSuccessMessage((prev) => ({
+                    ...prev,
+                    [cleanKey]: finalMsg,
+                  }));
                   localStorage.setItem(`msg-${cleanKey}`, finalMsg);
                 }
               }
@@ -89,16 +121,18 @@ export default function VolunteerHub() {
         localStorage.removeItem("olm-offline-backlog");
         console.log("🎉 Offline backlog successfully synced to Google Sheets!");
       } catch (err) {
-        console.error("Failed to clear backlog, will retry next connection cycle.", err);
+        console.error(
+          "Failed to clear backlog, will retry next connection cycle.",
+          err,
+        );
       }
     };
 
-    window.addEventListener('online', handleOnline);
-    if (navigator.onLine) handleOnline(); 
+    window.addEventListener("online", handleOnline);
+    if (navigator.onLine) handleOnline();
 
-    return () => window.removeEventListener('online', handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, []);
-
 
   // components/VolunteerHub.tsx - Chunk 3
   // Calculates real-time distance matching radius bounds
@@ -153,8 +187,10 @@ export default function VolunteerHub() {
     index: number,
   ) => {
     if (!navigator.geolocation && !IS_TESTING_MODE) {
-      alert(
-        "Your device does not support location tracking. Please visit the Admin table.",
+      triggerModal(
+        "🚨 Device Error",
+        "Your phone does not support location tracking natively. Please see David at the Admin table for a manual check-in.",
+        true,
       );
       return;
     }
@@ -187,7 +223,8 @@ export default function VolunteerHub() {
           setCheckedInSlots((prev) => ({ ...prev, [uniqueKey]: true }));
           setSuccessMessage((prev) => ({
             ...prev,
-            [uniqueKey]: "✓ Success, you're checked in! Please don't forget to check out when your shift is complete.",
+            [uniqueKey]:
+              "✓ Success, you're checked in! Please don't forget to check out when your shift is complete.",
           }));
           localStorage.setItem(`in-${uniqueKey}`, "true");
           localStorage.setItem(
@@ -207,44 +244,53 @@ export default function VolunteerHub() {
           );
         }
       } catch (error) {
-        // 🚨 CRITICAL OFFLINE FALLBACK: Save data locally instead of crashing
-        console.warn(
-          "⚠️ Network failure detected. Stashing check-in locally inside phone buffer.",
-        );
-
-        // Read existing queue or initialize a clean one
-        const existingBacklog = localStorage.getItem("olm-offline-backlog");
-        const currentQueue = existingBacklog ? JSON.parse(existingBacklog) : [];
-        currentQueue.push(payload);
-        localStorage.setItem(
-          "olm-offline-backlog",
-          JSON.stringify(currentQueue),
-        );
-
-        // Optimistically update the UI so the parent thinks everything went perfectly
-        if (type === "IN") {
-          setCheckedInSlots((prev) => ({ ...prev, [uniqueKey]: true }));
-          setSuccessMessage((prev) => ({
-            ...prev,
-            [uniqueKey]:
-              "⏳ Saved Offline! Your time is secured and will sync when network returns.",
-          }));
-          localStorage.setItem(`in-${uniqueKey}`, "true");
-          localStorage.setItem(
-            `msg-${uniqueKey}`,
-            "⏳ Saved Offline! Your time is secured and will sync when network returns.",
+        // 🔄 Detect explicit offline cellular network service drops vs live server faults
+        if (!navigator.onLine || error instanceof TypeError) {
+          console.warn(
+            "⚠️ Network failure detected. Stashing check-in locally inside phone buffer.",
           );
-        } else {
-          setCheckedOutSlots((prev) => ({ ...prev, [uniqueKey]: true }));
-          setSuccessMessage((prev) => ({
-            ...prev,
-            [uniqueKey]:
-              "⏳ Finished Offline! Your checkout will sync when network returns.",
-          }));
-          localStorage.setItem(`out-${uniqueKey}`, "true");
+
+          const existingBacklog = localStorage.getItem("olm-offline-backlog");
+          const currentQueue = existingBacklog
+            ? JSON.parse(existingBacklog)
+            : [];
+          currentQueue.push(payload);
           localStorage.setItem(
-            `msg-${uniqueKey}`,
-            "⏳ Finished Offline! Your checkout will sync when network returns.",
+            "olm-offline-backlog",
+            JSON.stringify(currentQueue),
+          );
+
+          if (type === "IN") {
+            setCheckedInSlots((prev) => ({ ...prev, [uniqueKey]: true }));
+            setSuccessMessage((prev) => ({
+              ...prev,
+              [uniqueKey]:
+                "⏳ Saved Offline! Your time is secured and will sync when network returns.",
+            }));
+            localStorage.setItem(`in-${uniqueKey}`, "true");
+            localStorage.setItem(
+              `msg-${uniqueKey}`,
+              "⏳ Saved Offline! Your time is secured and will sync when network returns.",
+            );
+          } else {
+            setCheckedOutSlots((prev) => ({ ...prev, [uniqueKey]: true }));
+            setSuccessMessage((prev) => ({
+              ...prev,
+              [uniqueKey]:
+                "⏳ Finished Offline! Your checkout will sync when network returns.",
+            }));
+            localStorage.setItem(`out-${uniqueKey}`, "true");
+            localStorage.setItem(
+              `msg-${uniqueKey}`,
+              "⏳ Finished Offline! Your checkout will sync when network returns.",
+            );
+          }
+        } else {
+          // 🎬 Active Internet but Server Pipeline Fault: Trigger your beautiful new custom modal!
+          triggerModal(
+            "⚠️ Transmission Error",
+            "Failed to safely stream tracking details over the network. Please notify the administrator or verify your data rows manually.",
+            true,
           );
         }
       } finally {
@@ -259,8 +305,10 @@ export default function VolunteerHub() {
         async (position) => {
           const { latitude, longitude } = position.coords;
           if (!verifyDistance(latitude, longitude)) {
-            alert(
-              "❌ Check-In Denied: You must physically be on OLM School grounds to log your time.",
+            triggerModal(
+              "❌ Check-In Denied",
+              "You must physically be on OLM School grounds to log your time. Please go to the school grounds and try again. If you are on the school grounds and still see this message, please notify the administrator David.",
+              true,
             );
             setCheckingInId(null);
             return;
@@ -270,11 +318,17 @@ export default function VolunteerHub() {
         (error) => {
           setCheckingInId(null);
           if (error.code === error.PERMISSION_DENIED) {
-            alert(
-              "❌ Location Blocked: Please enable location tracking permissions to log your points.",
+            triggerModal(
+              "🔒 Location Blocked",
+              'To secure your points, please tap the lock icon in your phone’s address URL bar, set Location Permissions to "Allow", and reload the page.',
+              true,
             );
           } else {
-            alert("Unable to capture location coordinates. Please try again.");
+            triggerModal(
+              "📍 Coordinates Missing",
+              "Unable to capture clear satellite location coordinates. Please step into an open area and try clicking again.",
+              true,
+            );
           }
         },
         { enableHighAccuracy: true, timeout: 7000 },
@@ -288,7 +342,9 @@ export default function VolunteerHub() {
       <div className="text-center mb-6">
         <span className="text-[150px]">🎬</span>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">
-          2026 OLM Drive In Movie Night<br />Volunteer Check-in
+          2026 OLM Drive In Movie Night
+          <br />
+          Volunteer Check-in
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           Movie Night Check-in System
@@ -303,8 +359,10 @@ export default function VolunteerHub() {
               Device Location Required
             </h4>
             <p className="text-sm text-blue-700 mt-0.5">
-              Please ensure you select <strong>"Allow Location"</strong><br /> when
-              prompted to check-in when<br className="sm:hidden" /> <strong className="uppercase">on school grounds</strong>.
+              Please ensure you select <strong>"Allow Location"</strong>
+              <br /> when prompted to check-in when
+              <br className="sm:hidden" />{" "}
+              <strong className="uppercase">on school grounds</strong>.
             </p>
           </div>
         </div>
@@ -446,6 +504,43 @@ export default function VolunteerHub() {
           >
             ← Clear and search different email
           </button>
+        </div>
+      )}
+
+      {modalConfig.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all duration-300">
+          <div className="w-full max-w-sm rounded-2xl border bg-slate-900 p-6 shadow-2xl text-center border-slate-800">
+            <div className="mb-4">
+              <span
+                className={`text-5xl inline-block drop-shadow-lg ${modalConfig.isError ? "animate-bounce" : ""}`}
+              >
+                {modalConfig.isError ? "🛑" : "✨"}
+              </span>
+            </div>
+
+            <h2
+              className={`text-xl font-black uppercase tracking-tight ${modalConfig.isError ? "text-rose-400" : "text-amber-400"}`}
+            >
+              {modalConfig.title}
+            </h2>
+
+            <p className="text-sm text-slate-300 mt-3 font-medium leading-relaxed">
+              {modalConfig.message}
+            </p>
+
+            <button
+              onClick={() =>
+                setModalConfig((prev) => ({ ...prev, isOpen: false }))
+              }
+              className={`w-full mt-6 py-3 px-4 font-bold text-xs uppercase tracking-widest rounded-xl transition duration-150 shadow-md ${
+                modalConfig.isError
+                  ? "bg-rose-600 hover:bg-rose-500 text-white shadow-[0_4px_15px_rgba(225,66,66,0.2)]"
+                  : "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_4px_15px_rgba(245,158,11,0.2)]"
+              }`}
+            >
+              Got It, Thanks
+            </button>
+          </div>
         </div>
       )}
     </div>
