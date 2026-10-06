@@ -11,8 +11,9 @@ export async function GET(request: Request) {
     );
   }
 
-  const SIGNUP_ID = "64521423";
+  const SIGNUP_ID = process.env.SIGNUP_ID;
   const API_KEY = process.env.SIGNUPGENIUS_API_KEY;
+  const TARGET_DATE_STRING = process.env.SIGNUP_DATE; 
 
   if (!API_KEY || API_KEY === 'undefined') {
     console.error("🔴 ERROR: SIGNUPGENIUS_API_KEY is not being read by Next.js!");
@@ -46,9 +47,16 @@ export async function GET(request: Request) {
     }
 
     // 2. Filter the master roster to match the parent's input email
-    const matchingSlots = rawRosterArray.filter(
-      (record: any) => record.email?.toLowerCase() === email.toLowerCase()
-    );
+    const matchingSlots = rawRosterArray.filter((record: any) => {
+      if (!record.startdatestring || !record.email) return false;
+
+      const cleanShiftDate = record.startdatestring.substring(0, 10);
+
+      return (
+        cleanShiftDate === TARGET_DATE_STRING &&
+        record.email.toLowerCase().trim() === email.toLowerCase().trim()
+      );
+    });
 
     if (matchingSlots.length === 0) {
       return NextResponse.json(
@@ -56,6 +64,8 @@ export async function GET(request: Request) {
         { status: 404 }
       );
     }
+
+
 
     // 3. Grab the first entry safely to extract name data strings
     const firstRecord = matchingSlots[0] || {};
