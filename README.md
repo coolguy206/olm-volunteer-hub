@@ -17,7 +17,7 @@ Designed specifically for outdoor campus functions, this application ensures abs
 
 - **Cinematic Dark-Mode UI:** A fully custom, glassmorphic dark theme built with **Tailwind CSS**, optimized explicitly for low-light, nighttime outdoor mobile screen scanning.
 - **Interactive Success Modals:** Replaced basic, disruptive browser alerts with custom, high-contrast modal overlays that gracefully guide parents through registration status, location locks, and system states.
-- **Geofenced Verification:** Implements the **HTML5 Geolocation API** paired with the **Haversine cryptographic equation** to lock checking in/out to a strict **150-meter perimeter** centered over the OLM campus. Prevents remote entries from home.
+- **Geofenced Verification:** Implements the **HTML5 Geolocation API** paired with the **Haversine cryptographic equation** to lock checking in/out to a strict **350-meter perimeter** centered over the OLM campus. Prevents remote entries from home.
 - **Offline Network Queue Buffer:** Catches cell drops on the school grounds, queuing check-in payloads securely inside the phone's browser `localStorage`. Instantly and automatically flushes the queue to the cloud the moment internet connectivity returns.
 - **Idempotent Data Ingestion Webhook:** A custom **Google Apps Script HTTP POST processor** scans the last 100 spreadsheet rows on-the-fly to seamlessly drop rapid duplicate button-mashes or invalid status transitions.
 - **Cross-Session Memory Persistence:** Tracks active session keys locally per account profile. If parents close their browser app mid-movie, it skips the log-in page upon return and has their active **Check Out** button waiting.
