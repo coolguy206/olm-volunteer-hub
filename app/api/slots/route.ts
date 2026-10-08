@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       email: email,
       // 4. Flatten and map entries, guaranteeing a valid array for .map() in React
       slots: matchingSlots.map((slot: any) => ({
-        slotId: slot.signupid || slot.slotitemid || Math.random(), 
+        slotId: slot.slotitemid || slot.signupid || Math.random(), 
         item: slot.item || slot.itemtitle || 'Volunteer Assignment',
         comment: slot.comment || '', 
       }))
